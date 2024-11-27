@@ -1,0 +1,66 @@
+import streamlit as st
+import random
+import time
+from search import astar_search, EightPuzzle  # Import module đã viết trước đó
+
+# Trạng thái ban đầu
+state = [1, 2, 3, 4, 5, 6, 7, 8, 0]
+puzzle = EightPuzzle(tuple(state))
+
+# Hiển thị trạng thái của puzzle
+def display_state(state):
+    state_str = ""
+    for i in range(0, 9, 3):
+        state_str += " | ".join(map(str, state[i:i + 3])) + "\n"
+    return state_str
+
+# Trộn trạng thái puzzle
+def scramble():
+    global state, puzzle
+    actions = ['UP', 'DOWN', 'LEFT', 'RIGHT']
+    for _ in range(60):  # Thực hiện 60 bước ngẫu nhiên
+        action = random.choice(actions)
+        if action in puzzle.actions(state):
+            state = list(puzzle.result(state, action))
+    puzzle = EightPuzzle(tuple(state))  # Cập nhật bài toán
+
+# Giải bài toán bằng A*
+def solve():
+    return astar_search(puzzle).solution()
+
+# Thực hiện giải bài toán từng bước
+def solve_steps():
+    global state
+    solution = solve()
+    steps = []
+    for move in solution:
+        state = list(puzzle.result(state, move))
+        steps.append(state)
+    return solution, steps
+
+# Giao diện Streamlit
+st.title("8-Puzzle Solver")
+st.write("Một ứng dụng mô phỏng giải bài toán 8-puzzle bằng thuật toán A*.")
+
+# Hiển thị trạng thái hiện tại
+st.subheader("Trạng thái hiện tại")
+st.text(display_state(state))
+
+# Nút để trộn trạng thái
+if st.button("Trộn Puzzle"):
+    scramble()
+    st.success("Puzzle đã được trộn!")
+    st.text(display_state(state))
+
+# Nút để giải bài toán
+if st.button("Giải Puzzle"):
+    with st.spinner("Đang giải bài toán..."):
+        solution, steps = solve_steps()
+    st.success("Puzzle đã được giải!")
+    st.subheader("Các bước giải:")
+    for idx, step in enumerate(steps):
+        st.write(f"Bước {idx + 1}:")
+        st.text(display_state(step))
+        time.sleep(0.5)  # Tùy chọn để mô phỏng
+
+st.write("Hoàn thành!")
